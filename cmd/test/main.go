@@ -1,21 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"log"
 
 	"github.com/TheTeemka/LitDB/dal"
 )
 
 func main() {
-	dal, _ := dal.New("db.db")
+	log.Default().SetFlags(log.Ltime | log.Lshortfile)
+	d, err := dal.New("db.db")
+	if err != nil {
+		panic(err)
+	}
 
-	// create a new page
-	p := dal.AllocateEmptyPage()
-	p.ID = dal.GetNextPage()
+	p := d.AllocateEmptyPage()
+	p.ID = d.GetNextPage()
 	copy(p.Data[:], "data")
 
 	// commit it
-	_ = dal.WritePage(p)
-	fmt.Println(os.Getpagesize())
+	_ = d.WritePage(p)
+	d.Close()
+
 }

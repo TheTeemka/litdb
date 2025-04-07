@@ -28,7 +28,7 @@ func (fr *freelist) ReleasePage(pgID pageID) {
 	fr.releasedPages = append(fr.releasedPages, pgID)
 }
 
-func (fr *freelist) Serialize(buf []byte) []byte {
+func (fr *freelist) serialize(buf []byte) []byte {
 	offset := 0
 
 	binary.LittleEndian.PutUint64(buf[offset:], uint64(fr.countAllocatedPages))
@@ -45,7 +45,7 @@ func (fr *freelist) Serialize(buf []byte) []byte {
 	return buf
 }
 
-func (fr *freelist) Deserialize(buf []byte) {
+func (fr *freelist) deserialize(buf []byte) {
 	offset := 0
 
 	fr.countAllocatedPages = pageID(binary.LittleEndian.Uint64(buf[offset:]))
