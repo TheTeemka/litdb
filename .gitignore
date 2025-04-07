@@ -1,0 +1,4 @@
+*.db
+makefile
+.idea
+.vscode
