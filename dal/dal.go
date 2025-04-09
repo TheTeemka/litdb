@@ -6,23 +6,27 @@ import (
 	"os"
 )
 
-type pageID int64
+type PageID int64
 type page struct {
-	ID   pageID
+	ID   PageID
 	Data []byte
 }
 
 type DAL struct {
-	file     *os.File
-	pageSize int
+	file           *os.File
+	pageSize       int
+	minFillPercent float32
+	maxFillPercent float32
 
 	meta *meta
 	*freelist
 }
 
-func New(path string) (*DAL, error) {
+func New(path string, options *Options) (*DAL, error) {
 	dal := &DAL{
-		pageSize: os.Getpagesize(),
+		pageSize:       options.PageSize,
+		minFillPercent: options.MinFillPercent,
+		maxFillPercent: options.MaxFillPercent,
 	}
 
 	if _, err := os.Stat(path); err == nil { // there is no error
@@ -80,7 +84,7 @@ func (d *DAL) AllocateEmptyPage() *page {
 	}
 }
 
-func (d *DAL) ReadPage(pgID pageID) (*page, error) {
+func (d *DAL) ReadPage(pgID PageID) (*page, error) {
 	p := d.AllocateEmptyPage()
 	p.ID = pgID
 
@@ -145,4 +149,12 @@ func (d *DAL) readFreeList() error {
 	freelist.deserialize(p.Data)
 	d.freelist = freelist
 	return nil
+}
+
+func (d *DAL) MaxTreshhold() int {
+	return int(float32(d.pageSize) * d.maxFillPercent)
+}
+
+func (d *DAL) MinTreshhold() int {
+	return int(float32(d.pageSize) * d.minFillPercent)
 }

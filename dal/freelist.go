@@ -1,20 +1,22 @@
 package dal
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 type freelist struct {
-	countAllocatedPages pageID
-	releasedPages       []pageID
+	countAllocatedPages PageID
+	releasedPages       []PageID
 }
 
 func newFreeList() *freelist {
 	return &freelist{
 		countAllocatedPages: metaPageID,
-		releasedPages:       []pageID{},
+		releasedPages:       []PageID{},
 	}
 }
 
-func (fr *freelist) GetNextPage() pageID {
+func (fr *freelist) GetNextPage() PageID {
 	if len(fr.releasedPages) != 0 {
 		pgID := fr.releasedPages[len(fr.releasedPages)-1]
 		fr.releasedPages = fr.releasedPages[:len(fr.releasedPages)-1]
@@ -24,7 +26,7 @@ func (fr *freelist) GetNextPage() pageID {
 	return fr.countAllocatedPages
 }
 
-func (fr *freelist) ReleasePage(pgID pageID) {
+func (fr *freelist) ReleasePage(pgID PageID) {
 	fr.releasedPages = append(fr.releasedPages, pgID)
 }
 
@@ -32,10 +34,10 @@ func (fr *freelist) serialize(buf []byte) []byte {
 	offset := 0
 
 	binary.LittleEndian.PutUint64(buf[offset:], uint64(fr.countAllocatedPages))
-	offset += pageIDsize
+	offset += 8
 
 	binary.LittleEndian.PutUint64(buf[offset:], uint64(len(fr.releasedPages)))
-	offset += pageIDsize
+	offset += 8
 
 	for _, pageID := range fr.releasedPages {
 		binary.LittleEndian.PutUint64(buf[offset:], uint64(pageID))
@@ -48,14 +50,14 @@ func (fr *freelist) serialize(buf []byte) []byte {
 func (fr *freelist) deserialize(buf []byte) {
 	offset := 0
 
-	fr.countAllocatedPages = pageID(binary.LittleEndian.Uint64(buf[offset:]))
-	offset += pageIDsize
+	fr.countAllocatedPages = PageID(binary.LittleEndian.Uint64(buf[offset:]))
+	offset += 8
 
 	cnt := binary.LittleEndian.Uint64(buf[offset:])
-	offset += pageIDsize
+	offset += 8
 
-	for i := uint64(0); i < cnt; i++ {
-		fr.releasedPages = append(fr.releasedPages, pageID(binary.LittleEndian.Uint64(buf[offset:])))
+	for range cnt {
+		fr.releasedPages = append(fr.releasedPages, PageID(binary.LittleEndian.Uint64(buf[offset:])))
 		offset += 8
 	}
 
