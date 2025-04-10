@@ -68,3 +68,18 @@ func (nX *NodeDAL) DeleteNode(node *Node) {
 	dal := nX.dal
 	dal.ReleasePage(node.pageID)
 }
+
+func (nX *NodeDAL) getAnsectorNodes(root *Node, ansectorIndex []int) ([]*Node, error) {
+	ansectors := make([]*Node, len(ansectorIndex))
+	ansectors[0] = root
+
+	for i := 1; i < len(ansectorIndex); i++ {
+		child, err := nX.ReadNode(ansectors[i-1].childNodes[ansectorIndex[i]])
+		if err != nil {
+			return nil, err
+		}
+		ansectors[i] = child
+	}
+	return ansectors, nil
+
+}

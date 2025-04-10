@@ -10,8 +10,8 @@ import (
 type PageID = dal.PageID
 
 type Item struct {
-	key   []byte
-	value []byte
+	Key   []byte
+	Value []byte
 }
 
 type Node struct {
@@ -36,8 +36,8 @@ func NewNode(items []*Item, childNodes []PageID, dal *dal.DAL) *Node {
 
 func NewItem(key, value []byte) *Item {
 	return &Item{
-		key:   key,
-		value: value,
+		Key:   key,
+		Value: value,
 	}
 }
 
@@ -61,22 +61,20 @@ func (n *Node) Serialize(buf []byte) []byte {
 		if !isLeaf {
 			childNode := n.childNodes[i]
 			binary.LittleEndian.PutUint64(buf[leftOff:], uint64(childNode))
-			log.Println(n.pageID, leftOff, buf[leftOff:leftOff+8])
 			leftOff += 8
 		}
-
 		item := n.items[i]
-		klen := len(item.key)
-		vlen := len(item.value)
+		klen := len(item.Key)
+		vlen := len(item.Value)
 
 		rightOff -= vlen
-		copy(buf[rightOff:], item.value)
+		copy(buf[rightOff:], item.Value)
 
 		rightOff -= 1
 		buf[rightOff] = byte(vlen)
 
 		rightOff -= klen
-		copy(buf[rightOff:], item.key)
+		copy(buf[rightOff:], item.Key)
 
 		rightOff -= 1
 		buf[rightOff] = byte(klen)
@@ -85,11 +83,9 @@ func (n *Node) Serialize(buf []byte) []byte {
 		binary.LittleEndian.PutUint16(buf[leftOff:], uint16(offset))
 		leftOff += 2
 	}
-
 	if !isLeaf {
 		childNode := n.childNodes[len(n.childNodes)-1]
 		binary.LittleEndian.PutUint64(buf[leftOff:], uint64(childNode))
-		log.Println(leftOff, buf[leftOff:leftOff+8])
 
 		leftOff += 8
 	}
@@ -100,7 +96,7 @@ func (n *Node) Serialize(buf []byte) []byte {
 func (n *Node) Deserialize(buf []byte) {
 	leftOff := 0
 
-	isLeaf := (buf[leftOff] == 1)
+	isLeaf := buf[leftOff] == 1
 	leftOff += 1
 
 	itemCount := binary.LittleEndian.Uint16(buf[leftOff:])
@@ -139,9 +135,10 @@ func (n *Node) Deserialize(buf []byte) {
 
 func (n *Node) elementSize(i int) int {
 	size := 0
-	size += len(n.items[i].key)
-	size += len(n.items[i].value)
+	size += len(n.items[i].Key)
+	size += len(n.items[i].Value)
 	size += 8 // childNode pageID
+	size += 2 // offset uint16
 	return size
 }
 
@@ -149,8 +146,11 @@ func (n *Node) nodeSize() int {
 	size := 0
 	size += 1 // isLeaf byte
 	size += 2 // item count uint16
+
+	if n == nil {
+		log.Println("Pizdes")
+	}
 	for i := range n.items {
-		size += 2 // offset uint16
 		size += n.elementSize(i)
 	}
 
@@ -183,4 +183,8 @@ func (n *Node) isOverPopulated() bool {
 
 func (n *Node) isUnderPopulated() bool {
 	return n.nodeSize() < n.dal.MinTreshhold()
+}
+
+func (n *Node) canSpareNode() bool {
+	return !n.isUnderPopulated()
 }
