@@ -3,7 +3,7 @@ package btree
 import (
 	"fmt"
 
-	"github.com/TheTeemka/LitDB/dal"
+	"github.com/TheTeemka/LitDB/internal/dal"
 )
 
 type NodeDAL struct {

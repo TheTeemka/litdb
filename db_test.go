@@ -1,11 +1,11 @@
-package btree_test
+package litdb_test
 
 import (
 	"os"
 	"testing"
 
-	"github.com/TheTeemka/LitDB/btree"
-	"github.com/TheTeemka/LitDB/dal"
+	"github.com/TheTeemka/LitDB/internal/btree"
+	"github.com/TheTeemka/LitDB/internal/dal"
 )
 
 func setupTestDB(t *testing.T) (*btree.Collection, func()) {
@@ -70,7 +70,7 @@ func TestTx(t *testing.T) {
 		{key: "Key5", val: "Value5"},
 		{key: "Key6", val: "Value6"},
 		{key: "Key7", val: "Value7"},
-		{key: "Key9", val: "Value8"},
+		{key: "Key8", val: "Value8"},
 	}
 
 	for _, item := range items {

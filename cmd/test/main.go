@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/TheTeemka/LitDB/btree"
-	"github.com/TheTeemka/LitDB/dal"
+	"github.com/TheTeemka/LitDB/internal/btree"
+	"github.com/TheTeemka/LitDB/internal/dal"
 )
 
 func main() {

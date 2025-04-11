@@ -2,7 +2,8 @@ package btree
 
 import (
 	"encoding/binary"
-	"github.com/TheTeemka/LitDB/dal"
+
+	"github.com/TheTeemka/LitDB/internal/dal"
 )
 
 type PageID = dal.PageID

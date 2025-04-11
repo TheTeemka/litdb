@@ -82,10 +82,6 @@ func (tx *tx) NewNode(items []*Item, childNodes []PageID) *Node {
 }
 
 func (tx *tx) Rollback() {
-	if !tx.write {
-		tx.db.rwLock.RUnlock()
-		return
-	}
 	tx.dirtyNodes = nil
 	tx.pagesToDelete = nil
 	for _, pageNum := range tx.allocatedPageNums {

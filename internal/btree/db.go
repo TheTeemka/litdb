@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/TheTeemka/LitDB/dal"
+	"github.com/TheTeemka/LitDB/internal/dal"
 )
 
 type DB struct {
