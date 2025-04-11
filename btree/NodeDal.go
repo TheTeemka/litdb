@@ -14,24 +14,15 @@ func NewNodeDAL(dal *dal.DAL) *NodeDAL {
 	return &NodeDAL{dal}
 }
 
-func readNode(dal *dal.DAL, pageID PageID) (*Node, error) {
-	p, err := dal.ReadPage(pageID)
+func (nX *NodeDAL) ReadNode(pageID PageID) (*Node, error) {
+	p, err := nX.dal.ReadPage(pageID)
 	if err != nil {
-		return nil, fmt.Errorf("allocating empty page: %w", err)
+		return nil, fmt.Errorf("reading node: %w", err)
 	}
 	node := NewEmptyNode()
 	node.Deserialize(p.Data)
 	node.pageID = pageID
-	node.NodeDAL = NewNodeDAL(dal)
 	return node, nil
-}
-
-func (nx *NodeDAL) NewNode(items []*Item, childNodes []PageID) *Node {
-	return NewNode(items, childNodes, nx.dal)
-}
-
-func (nX *NodeDAL) ReadNode(pageID PageID) (*Node, error) {
-	return readNode(nX.dal, pageID)
 }
 
 func (nX *NodeDAL) WriteNode(node *Node) error {
@@ -64,22 +55,7 @@ func (nX *NodeDAL) WriteNodes(nodes ...*Node) error {
 	return nil
 }
 
-func (nX *NodeDAL) DeleteNode(node *Node) {
+func (nX *NodeDAL) DeleteNode(pageID PageID) {
 	dal := nX.dal
-	dal.ReleasePage(node.pageID)
-}
-
-func (nX *NodeDAL) getAnsectorNodes(root *Node, ansectorIndex []int) ([]*Node, error) {
-	ansectors := make([]*Node, len(ansectorIndex))
-	ansectors[0] = root
-
-	for i := 1; i < len(ansectorIndex); i++ {
-		child, err := nX.ReadNode(ansectors[i-1].childNodes[ansectorIndex[i]])
-		if err != nil {
-			return nil, err
-		}
-		ansectors[i] = child
-	}
-	return ansectors, nil
-
+	dal.ReleasePage(pageID)
 }

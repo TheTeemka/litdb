@@ -2,7 +2,6 @@ package btree
 
 import (
 	"bytes"
-	"log"
 )
 
 // true means Key is i'th child
@@ -37,11 +36,10 @@ func findKeyHelper(node *Node, key []byte, exact bool, ansectors *[]int) (int, *
 
 	if node.IsLeaf() {
 		if exact {
-			return -1, nil, errNotFound
+			return -1, nil, ErrNotFound
 		}
 		return ind, node, nil
 	}
-
 	childNode, err := node.ReadNode(node.childNodes[ind])
 	*ansectors = append(*ansectors, ind)
 	if err != nil {
@@ -53,8 +51,7 @@ func findKeyHelper(node *Node, key []byte, exact bool, ansectors *[]int) (int, *
 func (n *Node) getSplitIndex() int {
 	size := 0
 	for i := range n.items {
-		log.Println(i, size)
-		if size >= n.dal.MinTreshhold() {
+		if size >= n.tx.db.dal.MinTreshhold() {
 			return i
 		}
 		size += n.elementSize(i)
@@ -70,10 +67,10 @@ func (n *Node) splitChild(childNodeToSplit *Node, childNodeToSplitIndex int) {
 	var newNode *Node
 
 	if childNodeToSplit.IsLeaf() {
-		newNode = n.NewNode(childNodeToSplit.items[splitIndex+1:], nil)
+		newNode = n.tx.NewNode(childNodeToSplit.items[splitIndex+1:], nil)
 		childNodeToSplit.items = childNodeToSplit.items[:splitIndex]
 	} else {
-		newNode = n.NewNode(childNodeToSplit.items[splitIndex+1:], childNodeToSplit.childNodes[splitIndex+1:])
+		newNode = n.tx.NewNode(childNodeToSplit.items[splitIndex+1:], childNodeToSplit.childNodes[splitIndex+1:])
 		childNodeToSplit.items = childNodeToSplit.items[:splitIndex]
 		childNodeToSplit.childNodes = childNodeToSplit.childNodes[:splitIndex+1]
 	}

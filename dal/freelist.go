@@ -32,6 +32,8 @@ func (fr *freelist) ReleasePage(pgID PageID) {
 
 func (fr *freelist) serialize(buf []byte) []byte {
 	offset := 0
+	buf[offset] = 'f'
+	offset += 1
 
 	binary.LittleEndian.PutUint64(buf[offset:], uint64(fr.countAllocatedPages))
 	offset += 8
@@ -49,7 +51,10 @@ func (fr *freelist) serialize(buf []byte) []byte {
 
 func (fr *freelist) deserialize(buf []byte) {
 	offset := 0
-
+	if buf[offset] == 'f' {
+		panic("there is no freelist starting with f")
+	}
+	offset += 1
 	fr.countAllocatedPages = PageID(binary.LittleEndian.Uint64(buf[offset:]))
 	offset += 8
 

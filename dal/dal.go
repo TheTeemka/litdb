@@ -3,6 +3,7 @@ package dal
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -53,7 +54,14 @@ func New(path string, options *Options) (*DAL, error) {
 		dal.meta = newEmptyMeta()
 		dal.freelist = newFreeList()
 		dal.meta.freelistPageID = dal.GetNextPage()
-		err := dal.writeFreeList()
+		dal.meta.collectionRootPageID = dal.GetNextPage()
+
+		err := dal.WriteFreeList()
+		if err != nil {
+			return nil, fmt.Errorf("could not write freelist: %w", err)
+		}
+
+		err = dal.writeMeta()
 		if err != nil {
 			return nil, fmt.Errorf("could not write freelist: %w", err)
 		}
@@ -66,7 +74,7 @@ func New(path string, options *Options) (*DAL, error) {
 
 func (d *DAL) Close() error {
 	d.writeMeta()
-	d.writeFreeList()
+	d.WriteFreeList()
 	if d.file != nil {
 		err := d.file.Close()
 		if err != nil {
@@ -89,8 +97,9 @@ func (d *DAL) ReadPage(pgID PageID) (*page, error) {
 	p.ID = pgID
 
 	offset := int(pgID) * d.pageSize
+
 	_, err := d.file.ReadAt(p.Data, int64(offset))
-	if err != nil {
+	if err != nil && !errors.Is(err, io.EOF) {
 		return nil, fmt.Errorf("reading page: %w", err)
 	}
 	return p, nil
@@ -105,16 +114,16 @@ func (d *DAL) WritePage(p *page) error {
 	return nil
 }
 
-func (d *DAL) writeMeta() (*page, error) {
+func (d *DAL) writeMeta() error {
 	p := d.AllocateEmptyPage()
 	p.ID = metaPageID
 	d.meta.serialize(p.Data)
 
 	err := d.WritePage(p)
 	if err != nil {
-		return nil, fmt.Errorf("writing meta page: %w", err)
+		return fmt.Errorf("writing meta page: %w", err)
 	}
-	return p, nil
+	return nil
 }
 
 func (d *DAL) readMeta() error {
@@ -128,7 +137,7 @@ func (d *DAL) readMeta() error {
 	return nil
 }
 
-func (d *DAL) writeFreeList() error {
+func (d *DAL) WriteFreeList() error {
 	p := d.AllocateEmptyPage()
 	p.ID = d.meta.freelistPageID
 	d.freelist.serialize(p.Data)
@@ -157,4 +166,8 @@ func (d *DAL) MaxTreshhold() int {
 
 func (d *DAL) MinTreshhold() int {
 	return int(float32(d.pageSize) * d.minFillPercent)
+}
+
+func (d *DAL) CollectionRootID() PageID {
+	return d.meta.collectionRootPageID
 }

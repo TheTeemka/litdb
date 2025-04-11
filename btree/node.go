@@ -2,8 +2,6 @@ package btree
 
 import (
 	"encoding/binary"
-	"log"
-
 	"github.com/TheTeemka/LitDB/dal"
 )
 
@@ -15,7 +13,7 @@ type Item struct {
 }
 
 type Node struct {
-	*NodeDAL
+	*tx
 	pageID     PageID
 	items      []*Item
 	childNodes []PageID
@@ -25,10 +23,10 @@ func NewEmptyNode() *Node {
 	return &Node{}
 }
 
-func NewNode(items []*Item, childNodes []PageID, dal *dal.DAL) *Node {
+func NewNode(items []*Item, childNodes []PageID, tx *tx) *Node {
 	return &Node{
-		pageID:     dal.GetNextPage(),
-		NodeDAL:    NewNodeDAL(dal),
+		tx:         tx,
+		pageID:     tx.db.dal.GetNextPage(),
 		items:      items,
 		childNodes: childNodes,
 	}
@@ -47,8 +45,12 @@ func (n *Node) IsLeaf() bool {
 
 func (n *Node) Serialize(buf []byte) []byte {
 	leftOff := 0
-	rightOff := len(buf) - 1
+	rightOff := len(buf)
 	isLeaf := n.IsLeaf()
+
+	buf[leftOff] = 'n' // it is page sign
+	leftOff += 1
+
 	if isLeaf {
 		buf[leftOff] = 1
 	}
@@ -95,6 +97,11 @@ func (n *Node) Serialize(buf []byte) []byte {
 
 func (n *Node) Deserialize(buf []byte) {
 	leftOff := 0
+
+	if buf[leftOff] != 'n' {
+		return
+	}
+	leftOff += 1
 
 	isLeaf := buf[leftOff] == 1
 	leftOff += 1
@@ -147,9 +154,6 @@ func (n *Node) nodeSize() int {
 	size += 1 // isLeaf byte
 	size += 2 // item count uint16
 
-	if n == nil {
-		log.Println("Pizdes")
-	}
 	for i := range n.items {
 		size += n.elementSize(i)
 	}
@@ -178,13 +182,28 @@ func (n *Node) AddChild(childPageID PageID, insertionIndex int) {
 }
 
 func (n *Node) isOverPopulated() bool {
-	return n.nodeSize() > n.dal.MaxTreshhold()
+	return n.nodeSize() > n.tx.db.dal.MaxTreshhold()
 }
 
 func (n *Node) isUnderPopulated() bool {
-	return n.nodeSize() < n.dal.MinTreshhold()
+	return n.nodeSize() < n.tx.db.dal.MinTreshhold()
 }
 
 func (n *Node) canSpareNode() bool {
 	return !n.isUnderPopulated()
+}
+
+func (n *Node) getAnsectorNodes(root *Node, ansectorIndex []int) ([]*Node, error) {
+	ansectors := make([]*Node, len(ansectorIndex))
+	ansectors[0] = root
+
+	for i := 1; i < len(ansectorIndex); i++ {
+		child, err := n.ReadNode(ansectors[i-1].childNodes[ansectorIndex[i]])
+		if err != nil {
+			return nil, err
+		}
+		ansectors[i] = child
+	}
+	return ansectors, nil
+
 }
