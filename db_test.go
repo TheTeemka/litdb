@@ -4,21 +4,20 @@ import (
 	"os"
 	"testing"
 
-	"github.com/TheTeemka/LitDB/internal/btree"
-	"github.com/TheTeemka/LitDB/internal/dal"
+	"github.com/TheTeemka/litdb"
+	"github.com/TheTeemka/litdb/internal/btree"
 )
 
 func setupTestDB(t *testing.T) (*btree.Collection, func()) {
 	t.Helper()
 	os.Remove("test.db")
-
-	options := &dal.Options{
+	options := &litdb.Options{
 		PageSize:       (1 << 7),
 		MinFillPercent: 0.4,
 		MaxFillPercent: 0.95,
 	}
 
-	db, err := btree.Open("test.db", options)
+	db, err := litdb.Open("test.db", options)
 	if err != nil {
 		t.Fatalf("Failed to create DAL: %v", err)
 	}

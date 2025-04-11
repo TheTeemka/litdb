@@ -4,21 +4,21 @@ import (
 	"log"
 	"os"
 
-	"github.com/TheTeemka/LitDB/internal/btree"
-	"github.com/TheTeemka/LitDB/internal/dal"
+	"github.com/TheTeemka/litdb"
 )
 
 func main() {
 	log.Default().SetFlags(log.Lshortfile)
 
 	os.Remove("./test.db")
-	options := &dal.Options{
+
+	options := &litdb.Options{
 		PageSize:       (1 << 7),
 		MinFillPercent: 0.4,
 		MaxFillPercent: 0.95,
 	}
 
-	db, err := btree.Open("./test.db", options)
+	db, err := litdb.Open("./test.db", options)
 	if err != nil {
 		panic(err)
 	}

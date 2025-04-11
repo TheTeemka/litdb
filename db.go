@@ -1,8 +1,8 @@
 package litdb
 
 import (
-	"github.com/TheTeemka/LitDB/internal/btree"
-	"github.com/TheTeemka/LitDB/internal/dal"
+	"github.com/TheTeemka/litdb/internal/btree"
+	"github.com/TheTeemka/litdb/internal/dal"
 )
 
 type Options = dal.Options
