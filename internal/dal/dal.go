@@ -171,3 +171,8 @@ func (d *DAL) MinTreshhold() int {
 func (d *DAL) CollectionRootID() PageID {
 	return d.meta.collectionRootPageID
 }
+
+func (d *DAL) UpdateCollectionRootID(rootID PageID) error {
+	d.meta.collectionRootPageID = rootID
+	return d.writeMeta()
+}

@@ -2,14 +2,13 @@ package btree
 
 import (
 	"bytes"
-	"fmt"
 	"log"
 )
 
 type tx struct {
 	dirtyNodes        map[PageID]*Node
 	pagesToDelete     []PageID
-	coll              *Collection
+	rootPageID        PageID
 	allocatedPageNums []PageID
 
 	write bool
@@ -17,14 +16,14 @@ type tx struct {
 	db *DB
 }
 
-func newTx(db *DB, coll *Collection, write bool) *tx {
+func newTx(db *DB, rootPageID PageID, write bool) *tx {
 	return &tx{
 		dirtyNodes:        map[PageID]*Node{},
 		pagesToDelete:     nil,
 		allocatedPageNums: nil,
 		write:             write,
 		db:                db,
-		coll:              coll,
+		rootPageID:        rootPageID,
 	}
 }
 
@@ -117,7 +116,6 @@ func (tx *tx) Find(key []byte) (*Item, error) {
 	defer tx.Runlock()
 
 	root, err := tx.getRootNode()
-	fmt.Println(root)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +168,7 @@ func (tx *tx) Put(key []byte, value []byte) error {
 	}
 
 	if root.isOverPopulated() {
-		newRoot := root.NewNode([]*Item{}, []PageID{tx.coll.rootID})
+		newRoot := root.NewNode([]*Item{}, []PageID{tx.rootPageID})
 		newRoot.splitChild(root, 0)
 
 		err := newRoot.WriteNode(newRoot)
@@ -178,7 +176,7 @@ func (tx *tx) Put(key []byte, value []byte) error {
 			return err
 		}
 
-		tx.coll.rootID = newRoot.pageID
+		tx.rootPageID = newRoot.pageID
 	}
 
 	return nil
@@ -230,7 +228,7 @@ func (tx *tx) Remove(key []byte) error {
 }
 
 func (tx *tx) getRootNode() (*Node, error) {
-	n, err := tx.ReadNode(tx.coll.rootID)
+	n, err := tx.ReadNode(tx.rootPageID)
 	if err != nil {
 		return nil, err
 	}

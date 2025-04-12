@@ -34,10 +34,6 @@ func (db *DB) Close() error {
 	return db.dal.Close()
 }
 
-func (db *DB) BeginTx(coll *Collection) *tx {
-	return newTx(db, coll, false)
-}
-
 func (db *DB) getRootCollection() *Collection {
 	rootCollection := newCollection(nil, db)
 	rootCollection.rootID = db.dal.CollectionRootID()
@@ -64,4 +60,9 @@ func (db *DB) GetCollection(name []byte) (*Collection, error) {
 		c.deserialize(item.Value)
 	}
 	return c, nil
+}
+
+func (db *DB) putCollection(c *Collection) error {
+	rootCollection := db.getRootCollection()
+	return rootCollection.putCollection(c)
 }

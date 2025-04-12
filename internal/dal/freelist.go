@@ -51,7 +51,7 @@ func (fr *freelist) serialize(buf []byte) []byte {
 
 func (fr *freelist) deserialize(buf []byte) {
 	offset := 0
-	if buf[offset] == 'f' {
+	if buf[offset] != 'f' {
 		panic("there is no freelist starting with f")
 	}
 	offset += 1
