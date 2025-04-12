@@ -9,7 +9,6 @@ import (
 
 func main() {
 	log.Default().SetFlags(log.Lshortfile)
-
 	os.Remove("./test.db")
 
 	options := &litdb.Options{

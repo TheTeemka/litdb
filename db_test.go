@@ -1,16 +1,19 @@
 package litdb_test
 
 import (
-	"os"
+	"log"
 	"testing"
 
 	"github.com/TheTeemka/litdb"
 	"github.com/TheTeemka/litdb/internal/btree"
 )
 
+func init() {
+	log.Default().SetFlags(log.Lshortfile)
+}
 func setupTestDB(t *testing.T) (*btree.Collection, func()) {
 	t.Helper()
-	os.Remove("test.db")
+	// os.Remove("test.db")
 	options := &litdb.Options{
 		PageSize:       (1 << 7),
 		MinFillPercent: 0.4,
@@ -37,8 +40,7 @@ func setupTestDB(t *testing.T) (*btree.Collection, func()) {
 func TestTx(t *testing.T) {
 	c, cleanup := setupTestDB(t)
 	defer cleanup()
-
-	tx := c.BeginTx()
+	tx := c.BeginTX()
 
 	items := []struct {
 		key string
@@ -87,7 +89,6 @@ func TestTx(t *testing.T) {
 
 func TestBasicFeatures(t *testing.T) {
 	c, cleanup := setupTestDB(t)
-	defer cleanup()
 
 	items := []struct {
 		key string
@@ -126,4 +127,13 @@ func TestBasicFeatures(t *testing.T) {
 			panic(err)
 		}
 	}
+	cleanup()
+
+	c, cleanup = setupTestDB(t)
+
+	// _, err := c.Find([]byte("Key1"))
+	// if err != nil {
+	// 	t.Error(err)
+	// }
+	cleanup()
 }

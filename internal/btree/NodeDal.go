@@ -56,6 +56,5 @@ func (nX *NodeDAL) WriteNodes(nodes ...*Node) error {
 }
 
 func (nX *NodeDAL) DeleteNode(pageID PageID) {
-	dal := nX.dal
-	dal.ReleasePage(pageID)
+	nX.dal.ReleasePage(pageID)
 }

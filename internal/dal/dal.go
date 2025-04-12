@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 )
 
 type PageID int64
@@ -21,6 +22,7 @@ type DAL struct {
 
 	meta *meta
 	*freelist
+	bytesPool *sync.Pool
 }
 
 func New(path string, options *Options) (*DAL, error) {
@@ -28,6 +30,11 @@ func New(path string, options *Options) (*DAL, error) {
 		pageSize:       options.PageSize,
 		minFillPercent: options.MinFillPercent,
 		maxFillPercent: options.MaxFillPercent,
+		bytesPool: &sync.Pool{
+			New: func() any {
+				return make([]byte, options.PageSize)
+			},
+		},
 	}
 
 	if _, err := os.Stat(path); err == nil { // there is no error
@@ -88,7 +95,7 @@ func (d *DAL) Close() error {
 
 func (d *DAL) AllocateEmptyPage() *page {
 	return &page{
-		Data: make([]byte, d.pageSize),
+		Data: d.bytesPool.New().([]byte),
 	}
 }
 
@@ -170,4 +177,9 @@ func (d *DAL) MinTreshhold() int {
 
 func (d *DAL) CollectionRootID() PageID {
 	return d.meta.collectionRootPageID
+}
+
+func (d *DAL) UpdateCollectionRootID(rootID PageID) error {
+	d.meta.collectionRootPageID = rootID
+	return d.writeMeta()
 }
