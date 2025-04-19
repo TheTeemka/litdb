@@ -40,8 +40,7 @@ func findKeyHelper(node *Node, key []byte, exact bool, ansectors *[]int) (int, *
 		}
 		return ind, node, nil
 	}
-	//change
-	//ass
+
 	childNode, err := node.ReadNode(node.childNodes[ind])
 	*ansectors = append(*ansectors, ind)
 	if err != nil {
